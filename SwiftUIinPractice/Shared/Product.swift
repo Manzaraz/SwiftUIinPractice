@@ -19,14 +19,24 @@ struct Product: Codable, Identifiable {
     let stock: Int
     let tags: [String]
     let brand: String?
-    let category: ProductCategory
+    let category: String
     let images: [String]
     let thumbnail: String
+    
+    var firstImage: String {
+        images.first ?? Constants.randomImage
+    }
 }
 
-enum ProductCategory: String, Codable {
-    case beauty = "beauty"
-    case fragrances = "fragrances"
-    case furniture = "furniture"
-    case groceries = "groceries"
+struct ProductRow: Identifiable {
+    let id = UUID().uuidString
+    let title: String
+    let products: [Product]
 }
+
+//enum ProductCategory: String, Codable {
+//    case beauty = "beauty"
+//    case fragrances = "fragrances"
+//    case furniture = "furniture"
+//    case groceries = "groceries"
+//}
