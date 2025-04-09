@@ -7,9 +7,34 @@
 
 import SwiftUI
 import SwiftfulUI
+import SwiftfulRouting
+
+@Observable
+final class SpotifyHomeViewModel {
+    let router: AnyRouter
+    
+    var currentUser: User? = nil 
+    var selectedCategory: Category? = nil
+    var products: [Product] = []
+    var productRows: [ProductRow] = []
+    
+    init(router: AnyRouter) {
+        self.router = router
+        self.currentUser = currentUser
+        self.selectedCategory = selectedCategory
+        self.products = products
+        self.productRows = productRows
+    }
+}
+
 
 struct SpotifyHomeView: View {
-    @State private var currentUser: User?
+    
+    @State var viewModel: SpotifyHomeViewModel
+    
+    @Environment(\.router) var router
+
+    @State private var currentUser: User? = nil
     @State private var selectedCategory: Category? = nil
     @State private var products: [Product] = []
     @State private var productRows: [ProductRow] = []
@@ -51,7 +76,9 @@ struct SpotifyHomeView: View {
 }
 
 #Preview {
-    SpotifyHomeView()
+    RouterView { router in
+        SpotifyHomeView(viewModel: SpotifyHomeViewModel(router: router))
+    }
 }
 
 extension SpotifyHomeView {
@@ -63,7 +90,7 @@ extension SpotifyHomeView {
                         .background(.spotifyWhite)
                         .clipShape(Circle())
                         .onTapGesture {
-                            // TODO: Action here
+                            router.dismissScreen()
                         }
                 }
             }
@@ -103,10 +130,18 @@ extension SpotifyHomeView {
                         title: product.title
                     )
                     .asButton(.press) {
-                        // Action here
+                        goToPlaylistView(product: product)
                     }
                 }
             }
+    }
+    
+    
+    private func goToPlaylistView(product: Product) {
+        guard let currentUser else { return }
+        router.showScreen(.push) { _ in
+            SpotifyPlaylistView(product: product, user: currentUser)
+        }
     }
     
     
@@ -118,10 +153,11 @@ extension SpotifyHomeView {
             title: product.title,
             subTitle: product.description,
             onAddToPlaylistPressed: {
-                
+                // TODO: Add to playlist feature8
             },
             onPlayPressed: {
-                
+                // TODO: Play button action
+                goToPlaylistView(product: product)
             })
     }
     
@@ -145,7 +181,7 @@ extension SpotifyHomeView {
                                 title: product.title
                             )
                             .asButton(.press) {
-                                // Action Here
+                                goToPlaylistView(product: product)
                             }
                         }
                     }
@@ -157,13 +193,14 @@ extension SpotifyHomeView {
     }
 }
 
+
 extension SpotifyHomeView {
-    
     private func getData() async {
+        guard products.isEmpty else { return }
+        
         do {
             currentUser = try await DatabasesHelper().getUsers().first
             products = try await Array(DatabasesHelper().getProducts().prefix(8))
-            
             
             var rows: [ProductRow] = []
             // MARK: - Rows sortered by Brands
@@ -189,6 +226,4 @@ extension SpotifyHomeView {
             print(error.localizedDescription)
         }
     }
-
-    
 }
